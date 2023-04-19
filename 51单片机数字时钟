@@ -1,0 +1,168 @@
+#include<reg52.h>
+sbit key1 = P3^0;//换位
+sbit key2 = P3^1;//加
+sbit key3 = P3^2;//减
+ 
+sbit LED  = P1^7;
+unsigned char kz1,kz2,kz3,kz4,kz5,w,k,nz,h;
+unsigned char ss = 2, sg = 3, fs = 5, fg = 9, ms = 5, mg = 5;
+ 
+//char SMG[18] = {0xFC,0x60,0xDA,0xF2,0x66,0xB6,0xBE,0xE0,0xFE,0xF6,0xEE,0x3E,0x9C,0x7A,0x9E,0x8E,0x00,0X02} ;//实物
+char SMG[12] = {
+0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,0x40,0x00} ;//仿真
+char are[] = {0Xfe,0Xfd,0Xfb,0Xf7,0Xef,0Xdf,0Xbf,0X7f};
+ 
+void zhongduan();
+void keykongzhi();
+void naoshizhong();
+void LedDriver();
+ void delay(unsigned int i)
+ {
+  while(i--);
+ }
+ 
+ void main()
+ {
+  zhongduan(); 
+  while(1)
+  {
+    naoshizhong();
+	 keykongzhi();
+	 LedDriver();
+  }
+ 
+ }
+ 
+void naoshizhong()
+  {
+ 
+      P0 = SMG[ss];P2 = are[0]; delay(500); P2 = 0Xff;
+      P0 = SMG[sg];P2 = are[1]; delay(500); P2 = 0Xff; 
+      P0 = SMG[10];P2 = are[2]; delay(500); P2 = 0Xff;
+      P0 = SMG[fs];P2 = are[3]; delay(500); P2 = 0Xff;
+      P0 = SMG[fg];P2 = are[4]; delay(500); P2 = 0Xff;
+      P0 = SMG[10];P2 = are[5]; delay(500); P2 = 0Xff;
+      P0 = SMG[ms];P2 = are[6]; delay(500); P2 = 0Xff;
+      P0 = SMG[mg];P2 = are[7]; delay(500); P2 = 0Xff;
+  
+  }
+ 
+ void keykongzhi()
+ {
+   
+      if(key1 == 0 && kz1 == 0)
+	  {
+	     kz1 = 1;
+	  }
+	  else if(key1 == 1 && kz1 == 1)
+	  {
+	  	 kz1 = 0;
+		 w++;
+		 w &= 0x03;
+	  } 
+	  
+    
+	     if(key2 == 0 && kz2 == 0)
+	    {
+	       kz2 = 1;
+	    }
+	    else if(key2 == 1 && kz2 == 1)
+	    {
+			kz2 = 0;
+		   
+		   	  switch(w)
+			  {	 
+			     case 1: mg = 0; ms = 0; break;
+			  	 case 2: fg ++; break;
+				 case 3: sg ++; break;		  
+			  }
+		 
+	    }
+		if(key3 == 0 && kz3 == 0)
+	    {
+	       kz3 = 1;
+	    }
+	    else if(key3 == 1 && kz3 == 1)
+	    {
+			kz3 = 0;
+		  
+		   	  switch(w)
+			  {	 
+			     case 1: mg = 0; ms = 0; break;
+			  	 case 2: fg --; break;
+				 case 3: sg --; break;		  
+			  }
+	
+	    }
+	   if(w == 1 && nz == 0)   //时钟调秒
+	  {
+	    P0 = SMG[ms]+128;P2 = are[6]; delay(800); P2 = 0Xff;
+        P0 = SMG[mg]+128;P2 = are[7]; delay(800); P2 = 0Xff;
+	  }
+	  if(w == 2 && nz == 0)	   //时钟调分
+	  {
+	    P0 = SMG[fs]+128;P2 = are[3]; delay(800); P2 = 0Xff;
+        P0 = SMG[fg]+128;P2 = are[4]; delay(800); P2 = 0Xff;
+	  }
+	  if(w == 3 && nz == 0)	   //时钟调时
+	  {
+	      P0 = SMG[ss]+128;P2 = are[0]; delay(800); P2 = 0Xff;
+          P0 = SMG[sg]+128;P2 = are[1]; delay(800); P2 = 0Xff;
+	  }
+ }
+ void zhongduan()
+ {
+  TMOD=0X01;
+	TH0=0X3C;//50ms
+	TL0=0XB0;
+	ET0=1;
+	TR0=1;
+	EA=1;
+ }
+ 
+ void LedDriver()
+ {
+ if (k >= 40)
+    {
+		k = 0;
+		mg ++;
+    }
+  
+ if (mg >= 10)
+    {
+	mg = 0;
+	ms ++;
+    }
+  if (ms >= 6)
+    {
+	 ms = 0;
+	 fg ++;
+    }
+   if (fg >= 10)
+     {	
+       fg = 0;
+	   fs ++;
+     }
+ 
+    if (fs >= 6)
+     {
+        fs = 0;
+     	sg ++;
+     }				
+    if (sg >= 10)
+    {
+       sg = 0;
+	   ss ++ ;
+    }										
+    if (ss ==2 && sg == 4)
+    { 
+	   ss = 0;
+       sg = 0;
+    }	 
+ }
+ void time0() interrupt 1 using 0
+ {
+  TH0=0X3C;
+  TL0=0XB0;
+  k ++;	
+ }
